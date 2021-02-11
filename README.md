@@ -25,7 +25,7 @@ Example: https://meet.jit.si/This_is_a_Jitsi_Room
 
   - **link_teams:**  
 The link to the Meeting SW
-Example:
+Example: https://teams.microsoft.com/_#/pre-join-calling/19:meeting_NzdiYmNzdNzNzNzdiYmdiYmdiYmiYm5@thread.v2
 
 - **username:**  
 The username of your Guest Account.
@@ -50,7 +50,6 @@ Valid options: `google-chrome`, `chromium`, `msedge`. By default, google chrome 
 
 ## Run the script
 
- 1. Rename the [config.json.example](config.json.example) file to "config.json"
- 2. Edit the "config.json" file to fit your preferences (optional)
- 3. Install dependencies:   ```pip install -r requirements.txt```
- 4. Run [auto_joiner.py](auto_joiner.py): `python auto_joiner.py`
+ 1. Install dependencies:   ```pip install -r requirements.txt```
+ 2. Edit the "config.json" file to fit your preferences
+ 3. Run [auto_joiner.py](auto_joiner.py): `python auto_joiner.py`

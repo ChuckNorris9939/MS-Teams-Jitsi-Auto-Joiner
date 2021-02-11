@@ -1,6 +1,4 @@
 import json
-import random
-import re
 import time
 from datetime import datetime, timedelta
 from threading import Timer
@@ -8,7 +6,7 @@ from threading import Timer
 from selenium import webdriver
 from selenium.common import exceptions
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
@@ -17,16 +15,9 @@ from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from msedge.selenium_tools import Edge, EdgeOptions
 
 browser: webdriver.Chrome = None
-total_members = None
 config = None
-meetings = []
 current_meeting = None
-already_joined_ids = []
-active_correlation_id = ""
 hangup_thread: Timer = None
-conversation_link = "https://teams.microsoft.com/_#/conversations/a"
-mode = 3
-uuid_regex = r"\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b"
 
 
 def load_config():
@@ -93,7 +84,7 @@ def init_browser():
 
 def wait_until_found(sel, timeout, print_error=True):
     try:
-        element_present = EC.visibility_of_element_located((By.CSS_SELECTOR, sel))
+        element_present = ec.visibility_of_element_located((By.CSS_SELECTOR, sel))
         WebDriverWait(browser, timeout).until(element_present)
 
         return browser.find_element_by_css_selector(sel)
@@ -115,22 +106,17 @@ def main():
 
     while current_meeting:
         time.sleep(10)
+    print("auto leave time reached. exiting...")
     exit(1)
 
 
 def hangup():
     global current_meeting
-
-    print("auto leave time reached. exiting...")
     current_meeting = False
-
-    if hangup_thread:
-        hangup_thread.cancel()
-        exit()
 
 
 def jitsi():
-    global config, meetings, mode, conversation_link, total_members, hangup_thread, current_meeting
+    global config, hangup_thread, current_meeting
     current_meeting = True
     init_browser()
     browser.get(config["link_jitsi"])
@@ -141,7 +127,6 @@ def jitsi():
         button.click()
     else:
         print("microphone button not found")
-
     time.sleep(5)
     camera = wait_until_found("path[d='M22.688 14l5.313-5.313v14.625l-5.313-5.313v4.688c0 .75-.625 1.313-1.375 1.313h-16C4.563 24 4 23.437 4 22.687V9.312c0-.75.563-1.313 1.313-1.313h16c.75 0 1.375.563 1.375 1.313V14z']", 5)
     if camera is not None:
@@ -149,7 +134,6 @@ def jitsi():
     else:
         print("Camera Button not found")
     time.sleep(5)
-
     username = wait_until_found("input[placeholder='Bitte geben Sie hier Ihren Namen ein']", 30)
     if username is not None:
         username.send_keys(config['username'])
@@ -160,21 +144,19 @@ def jitsi():
     username = wait_until_found("input[placeholder='Bitte geben Sie hier Ihren Namen ein']", 5)
     if username is not None:
         username.send_keys(Keys.ENTER)
-
+    #leave Timer
     if 'auto_leave_after_min' in config and config['auto_leave_after_min'] > 0:
         hangup_thread = Timer(config['auto_leave_after_min'] * 60, hangup)
         hangup_thread.start()
 
 
 def teams():
-    global config, meetings, mode, conversation_link, total_members, hangup_thread, current_meeting
+    global config, hangup_thread, current_meeting
 
     current_meeting = True
     init_browser()
-
     browser.get(config["link_teams"])
     time.sleep(5)
-
     button = wait_until_found("button[data-tid='joinOnWeb']", 5)
     if button is not None:
         button.click()
@@ -204,7 +186,7 @@ def teams():
     username = wait_until_found("input[id='username']", 5)
     if username is not None:
         username.send_keys(Keys.ENTER)
-
+    #leave Timer
     if 'auto_leave_after_min' in config and config['auto_leave_after_min'] > 0:
         hangup_thread = Timer(config['auto_leave_after_min'] * 60, hangup)
         hangup_thread.start()
@@ -228,8 +210,8 @@ if __name__ == "__main__":
         end = config["auto_leave_after_min"]
         close = run_at + timedelta(minutes=end, seconds=30)
 
-        if 'auto_leave_after_min' in config and config[ 'auto_leave_after_min' ] != "":
-            print(f"Closing at {close} ({end}m)")
+        if 'auto_leave_after_min' in config and config['auto_leave_after_min'] > 0:
+            print(f"Closing at    {close} ({end}m)")
 
         time.sleep(start_delay)
 
