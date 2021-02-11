@@ -2,7 +2,7 @@ import json
 import random
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from threading import Timer
 
 from selenium import webdriver
@@ -104,23 +104,36 @@ def wait_until_found(sel, timeout, print_error=True):
 
 
 def main():
-    # jitsi()
-    teams()
+    global config, current_meeting, hangup_thread
+
+    if config["type"] == "jitsi":
+        jitsi()
+    elif config["type"] == "teams":
+        teams()
+    else:
+        print("Wrong Type \n Valid: jitsi, teams")
+
+    while current_meeting:
+        time.sleep(2)
+
+    if 'auto_leave_after_min' in config and config[ 'auto_leave_after_min' ] > 0:
+        hangup_thread = Timer(config[ 'auto_leave_after_min' ] * 60, hangup)
+        hangup_thread.start()
+
+
+def hangup():
+    global current_meeting, hangup_thread
+
+    print("auto leave time reached. exiting...")
+    exit(1)
 
 
 def jitsi():
-    global config, meetings, mode, conversation_link, total_members
-
-    mode = 1
-    if "meeting_mode" in config and 0 < config["meeting_mode"] < 4:
-        mode = config["meeting_mode"]
-
+    global config, meetings, mode, conversation_link, total_members, hangup_thread, current_meeting
+    current_meeting = True
     init_browser()
-    browser.get("https://meet.jit.si/FS21_Lernfeld08_GOTT")
+    browser.get(config["link_jitsi"])
     time.sleep(5)
-    # use_web_instead = wait_until_found(".use-app-lnk", 5, print_error=False)
-    # if use_web_instead is not None:
-    #     use_web_instead.click()
 
     button = wait_until_found("path[d='M23.063 14.688h2.25c0 4.563-3.625 8.313-8 8.938v4.375h-2.625v-4.375c-4.375-.625-8-4.375-8-8.938h2.25c0 4 3.375 6.75 7.063 6.75s7.063-2.75 7.063-6.75zm-7.063 4c-2.188 0-4-1.813-4-4v-8c0-2.188 1.813-4 4-4s4 1.813 4 4v8c0 2.188-1.813 4-4 4z']", 5)
     if button is not None:
@@ -147,24 +160,15 @@ def jitsi():
     if username is not None:
         username.send_keys(Keys.ENTER)
 
-    time.sleep(5)
-    input("prompt: ")
-
 
 def teams():
-    global config, meetings, mode, conversation_link, total_members
+    global config, meetings, mode, conversation_link, total_members, hangup_thread, current_meeting
 
-    mode = 1
-    if "meeting_mode" in config and 0 < config["meeting_mode"] < 4:
-        mode = config["meeting_mode"]
-
+    current_meeting = True
     init_browser()
 
-    browser.get("https://teams.microsoft.com/l/meetup-join/19%3Ameeting_NzdiYmE4YmEtYjE0OS00Y2UwLWJmY2UtNTc4YmU0MDJkMmE5%40thread.v2/0?context=%7B%22Tid%22%3A%221f7e4bc8-b5f6-469d-9aaf-09b1a1169b1d%22%2C%22Oid%22%3A%22462e61ef-bb51-4b45-b11a-226f91e0718c%22%7D")
+    browser.get(config["link_teams"])
     time.sleep(5)
-    # use_web_instead = wait_until_found(".use-app-lnk", 5, print_error=False)
-    # if use_web_instead is not None:
-    #     use_web_instead.click()
 
     button = wait_until_found("button[data-tid='joinOnWeb']", 5)
     if button is not None:
@@ -196,9 +200,6 @@ def teams():
     if username is not None:
         username.send_keys(Keys.ENTER)
 
-    time.sleep(5)
-    input("prompt: ")
-
 
 if __name__ == "__main__":
     load_config()
@@ -214,7 +215,14 @@ if __name__ == "__main__":
         start_delay = (run_at - now).total_seconds()
 
         print(f"Waiting until {run_at} ({int(start_delay)}s)")
-        time.sleep(start_delay)
+
+        end = config["auto_leave_after_min"]
+        close = run_at + timedelta(minutes=end, seconds=30)
+
+        if 'auto_leave_after_min' in config and config[ 'auto_leave_after_min' ] != "":
+            print(f"Closing at {close} ({end}m)")
+        #start_delay
+        time.sleep(0)
 
     try:
         main()

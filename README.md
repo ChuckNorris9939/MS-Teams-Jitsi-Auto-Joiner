@@ -12,7 +12,21 @@ Automatically turns off your microphone and camera before joining.
  - Python3 ([Download](https://www.python.org/downloads/))  
    
 ## Configuration options  
-  
+
+
+
+  - **type:**  
+The type of the Meeting SW
+Valid options: `jitsi`, `teams`
+
+  - **link_jitsi:**  
+The link to the Meeting SW
+Example: https://meet.jit.si/This_is_a_Jitsi_Room
+
+  - **link_teams:**  
+The link to the Meeting SW
+Example:
+
 - **username:**  
 The username of your Guest Account.
 
