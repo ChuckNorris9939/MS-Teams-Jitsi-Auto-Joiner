@@ -104,7 +104,7 @@ def wait_until_found(sel, timeout, print_error=True):
 
 
 def main():
-    global config, current_meeting, hangup_thread
+    global config, current_meeting
 
     if config["type"] == "jitsi":
         jitsi()
@@ -114,18 +114,19 @@ def main():
         print("Wrong Type \n Valid: jitsi, teams")
 
     while current_meeting:
-        time.sleep(2)
-
-    if 'auto_leave_after_min' in config and config[ 'auto_leave_after_min' ] > 0:
-        hangup_thread = Timer(config[ 'auto_leave_after_min' ] * 60, hangup)
-        hangup_thread.start()
+        time.sleep(10)
+    exit(1)
 
 
 def hangup():
-    global current_meeting, hangup_thread
+    global current_meeting
 
     print("auto leave time reached. exiting...")
-    exit(1)
+    current_meeting = False
+
+    if hangup_thread:
+        hangup_thread.cancel()
+        exit()
 
 
 def jitsi():
@@ -159,6 +160,10 @@ def jitsi():
     username = wait_until_found("input[placeholder='Bitte geben Sie hier Ihren Namen ein']", 5)
     if username is not None:
         username.send_keys(Keys.ENTER)
+
+    if 'auto_leave_after_min' in config and config['auto_leave_after_min'] > 0:
+        hangup_thread = Timer(config['auto_leave_after_min'] * 60, hangup)
+        hangup_thread.start()
 
 
 def teams():
@@ -200,6 +205,10 @@ def teams():
     if username is not None:
         username.send_keys(Keys.ENTER)
 
+    if 'auto_leave_after_min' in config and config['auto_leave_after_min'] > 0:
+        hangup_thread = Timer(config['auto_leave_after_min'] * 60, hangup)
+        hangup_thread.start()
+
 
 if __name__ == "__main__":
     load_config()
@@ -221,8 +230,8 @@ if __name__ == "__main__":
 
         if 'auto_leave_after_min' in config and config[ 'auto_leave_after_min' ] != "":
             print(f"Closing at {close} ({end}m)")
-        #start_delay
-        time.sleep(0)
+
+        time.sleep(start_delay)
 
     try:
         main()
